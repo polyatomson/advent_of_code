@@ -39,6 +39,15 @@ class Game:
             return self.id
         else:
             return 0
+    
+    def get_power(self) -> int:
+        
+        maxblue = max([r.blue for r in self.rounds])
+        maxgreen = max([r.green for r in self.rounds])
+        maxred = max([r.red for r in self.rounds])
+
+        power = maxblue * maxgreen * maxred
+        return power
 
 
 
@@ -56,18 +65,28 @@ def parsegames(line):
 
 
 def cheking_all_games(dat):
-    id_sum = 0
+    id_sum_part1 = 0
+    id_sum_part2 = 0
     for line in dat:
+       
         game = parsegames(line)
-        game_result = game.checkifgameispossible(given_blue=14, given_green=13, given_red=12)
-        id_sum += game_result
-    return id_sum
+        
+        game_result_part_one = game.checkifgameispossible(given_blue=14, given_green=13, given_red=12)
+        id_sum_part1 += game_result_part_one
+
+        game_power_part_two = game.get_power()
+        id_sum_part2 += game_power_part_two
+        
+    return id_sum_part1, id_sum_part2
+
 
 def main():
     with open("2/input.txt", "r") as f:
         dat = f.readlines()
-    result = cheking_all_games(dat)
-    print("result:", result)
+    
+    result1, result2 = cheking_all_games(dat)
+    print("result part one:", result1)
+    print("result part two:", result2)
 
 if __name__ == '__main__':
     main()
