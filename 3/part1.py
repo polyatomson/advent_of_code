@@ -1,14 +1,16 @@
 import re
+from typing import List
 
-keep_positive = lambda x: x if x >= 0 else 0
-keep_within_range = lambda x, length: x if x < length else length
 
-def get_spans(lines):
+def get_spans(lines: List[str]):
     number = re.compile("[0-9]+")
     character = re.compile("[^0-9\.]")
 
     numbers = list()
     characters = list()
+
+    keep_positive = lambda x: x if x >= 0 else 0
+    keep_within_range = lambda x, length: x if x < length else length
 
     for l in lines:
         numbers.append([{"span": n.span(), "number": n.group()} for n in number.finditer(l)])
@@ -21,8 +23,8 @@ def compare_two_spans(span1: tuple[int, int], span2: tuple[int, int]):
     span2 = list(range(span2[0], span2[1]))
     for i in span1:
         if i in span2:
-            return True
-    return False
+            return True #the spans overlap
+    return False #the spans do not overlap
 
 def main():
     with open("3/input.txt", "r") as fn:
