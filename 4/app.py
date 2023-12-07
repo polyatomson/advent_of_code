@@ -45,17 +45,16 @@ def part_one(dat: List[str]) -> None:
 
 def part_two(dat: List[str]) -> None:
     card_pile = [Card.import_card(line) for line in dat]
-    results_pile = {card.id:[card.won()] for card in card_pile}
+    results_pile = {card.id:{"value":card.won(), "ncopies":1} for card in card_pile}
     #getcopies
-    for id, ncopies_forward in results_pile.items():
-        for ncopies in ncopies_forward:
-            copies_range = range(id+1, id+1+ncopies)
-            copies_ids = list(copies_range)
+    for id, card_info in results_pile.items():
+        copies_range = range(id+1, id+1+card_info["value"])
+        copies_ids = list(copies_range)
+        for ncopies in range(card_info["ncopies"]):
             for copy_id in copies_ids:
-                results_pile[copy_id].append(results_pile[copy_id][0])
-    flattened_results_pile = [card for ncopies in results_pile.values() 
-                              for card in ncopies]
-    print(len(flattened_results_pile))
+                results_pile[copy_id]["ncopies"] += 1
+    final_ncards = sum([card["ncopies"] for card in results_pile.values()])
+    print(final_ncards)
 
 
 def main(fn: str = "4/input.txt") -> None:
@@ -65,4 +64,4 @@ def main(fn: str = "4/input.txt") -> None:
     part_two(dat)
 
 if __name__ == '__main__':
-    main("4/input.txt")
+    main()
