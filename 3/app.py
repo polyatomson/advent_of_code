@@ -1,5 +1,4 @@
 import re
-# from dataclasses import dataclass
 
 keep_positive = lambda x: x if x >= 0 else 0
 keep_within_range = lambda x, length: x if x < length else length
@@ -28,10 +27,10 @@ def compare_two_spans(span1: tuple[int, int], span2: tuple[int, int]):
     return False
 
 def main():
-    with open("3/input_test.txt", "r") as fn:
-    # with open("3/input.txt", "r") as fn:
+    with open("3/input.txt", "r") as fn:
         dat = fn.readlines()
-
+    dat = [line.strip("\n") for line in dat]
+    
     numbers, characters = get_spans(dat)
     good_numbers = []
 
@@ -58,7 +57,6 @@ def main():
                 if adjacency is False:
                     # print("bad")
                     print(number["number"], i+1)
-        # print("good_numbers:", good_numbers)
 
     print("result:", sum(good_numbers))
 
