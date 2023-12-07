@@ -4,34 +4,42 @@ from typing import List, Optional
 
 @dataclass
 class Mapping:
-    origin_range: range
-    dest_value: int
+    dest_range_start: int
+    origin_range_start: int
+    range_len: int
 
+    @staticmethod
     def create_mapping(mapping_array: List[int]):
-        return Mapping(origin_range=range(mapping_array[0], mapping_array[1]), 
-                                          dest_value=mapping_array[2])
+        return Mapping(dest_range_start=mapping_array[0], 
+                       origin_range_start=mapping_array[1], 
+                       range_len=mapping_array[2])
+    
+    def create_mapping_dict(self) -> dict:
+        origin_range = list(range(self.origin_range_start, self.origin_range_start+self.range_len))
+        dest_range = list(range(self.dest_range_start, self.dest_range_start+self.range_len))
+        return {origin_n:dest_range[i] for i, origin_n in enumerate(origin_range)}
+
+    
 
 @dataclass
 class Map:
     origin: str
     destination: str
-    mappings: List[Mapping]
+    mappings_dict: dict
 
     @staticmethod
     def import_map(raw_map: str):
         raw_map = raw_map.split("\n")
         title = raw_map.pop(0).replace(" map:", "")
         origin, destination = title.split("-to-")
-
-        mappings = [Mapping.create_mapping(
-            [int(n) for n in line.split(" ")]) for line in raw_map]
+        mappings = [Mapping.create_mapping([int(n) for n in line.split(" ")]) for line in raw_map]
+        mappings_dict = { k:v for mapping in mappings for k, v in mapping.create_mapping_dict().items() }
         
-        return Map(origin, destination, mappings)
+        return Map(origin, destination, mappings_dict)
 
     def get_dest(self, orig_value) -> int:
-        for mapping in self.mappings:
-            if orig_value in mapping.origin_range:
-                return mapping.dest_value
+        if orig_value in self.mappings_dict:
+                return self.mappings_dict[orig_value]
         else:
             return orig_value
 
@@ -47,7 +55,7 @@ class Map:
 #     location: Optional[int]
 
 
-def parse_input(fn: str = "5/input_test.txt") -> (List[int], List[Map]):
+def parse_input(fn: str = "5/input.txt") -> (List[int], List[Map]):
     with open(fn, 'r') as f:
         dat = f.read()
     dat = dat.split("\n\n")
@@ -65,9 +73,8 @@ def go_through_maps(instruction_cursor: int, maps: List[Map]):
 
 def main():
     seeds, maps = parse_input()
-    for seed in seeds:
-        location = go_through_maps(seed, maps)
-        print(location)
+    locations = [go_through_maps(seed, maps) for seed in seeds]
+    print("Part One result:", min(locations))
 
 if __name__ == "__main__":
     main()
