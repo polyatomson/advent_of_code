@@ -4,28 +4,20 @@ from typing import List, Optional
 
 @dataclass
 class Mapping:
-    dest_range_start: int
-    origin_range_start: int
-    range_len: int
+    dest_range: range
+    origin_range: range
 
     @staticmethod
     def create_mapping(mapping_array: List[int]):
-        return Mapping(dest_range_start=mapping_array[0], 
-                       origin_range_start=mapping_array[1], 
-                       range_len=mapping_array[2])
-    
-    def create_mapping_dict(self) -> dict:
-        origin_range = list(range(self.origin_range_start, self.origin_range_start+self.range_len))
-        dest_range = list(range(self.dest_range_start, self.dest_range_start+self.range_len))
-        return {origin_n:dest_range[i] for i, origin_n in enumerate(origin_range)}
-
+        return Mapping(dest_range=range(mapping_array[0], mapping_array[0]+mapping_array[2]),
+                       origin_range = range(mapping_array[1], mapping_array[1]+mapping_array[2]))
     
 
 @dataclass
 class Map:
     origin: str
     destination: str
-    mappings_dict: dict
+    mappings: List[Mapping]
 
     @staticmethod
     def import_map(raw_map: str):
@@ -33,13 +25,14 @@ class Map:
         title = raw_map.pop(0).replace(" map:", "")
         origin, destination = title.split("-to-")
         mappings = [Mapping.create_mapping([int(n) for n in line.split(" ")]) for line in raw_map]
-        mappings_dict = { k:v for mapping in mappings for k, v in mapping.create_mapping_dict().items() }
         
-        return Map(origin, destination, mappings_dict)
+        return Map(origin, destination, mappings)
 
     def get_dest(self, orig_value) -> int:
-        if orig_value in self.mappings_dict:
-                return self.mappings_dict[orig_value]
+        for mapping in self.mappings:
+            if orig_value in mapping.origin_range:
+                index = mapping.origin_range.index(orig_value)
+                return mapping.dest_range.__getitem__(index)
         else:
             return orig_value
 
@@ -55,7 +48,7 @@ class Map:
 #     location: Optional[int]
 
 
-def parse_input(fn: str = "5/input.txt") -> (List[int], List[Map]):
+def parse_input(fn: str = "5/input_test.txt") -> (List[int], List[Map]):
     with open(fn, 'r') as f:
         dat = f.read()
     dat = dat.split("\n\n")
