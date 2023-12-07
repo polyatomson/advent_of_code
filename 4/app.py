@@ -40,7 +40,7 @@ def part_one(dat: List[str]) -> None:
         card = Card.import_card(line)
         card_points = card.points()
         result += card_points
-    print(result)
+    print("Part One result:", result)
 
 
 def part_two(dat: List[str]) -> None:
@@ -54,7 +54,7 @@ def part_two(dat: List[str]) -> None:
             for copy_id in copies_ids:
                 results_pile[copy_id]["ncopies"] += 1
     final_ncards = sum([card["ncopies"] for card in results_pile.values()])
-    print(final_ncards)
+    print("Part Two result:", final_ncards)
 
 
 def main(fn: str = "4/input.txt") -> None:
