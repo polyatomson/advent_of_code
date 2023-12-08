@@ -11,7 +11,7 @@ def compare_ranges(range1: range, range2: range) -> (Optional[range], Optional[L
         else: #right overlap
             overlap = range(range2.start, range1.stop)
             remainder = [range(range1.start, range2.start)]
-    elif range1.start > range2.start and range1.start < range2.stop: #ensure a left overlap or 1 in 2
+    elif range1.start >= range2.start and range1.start < range2.stop: #ensure a left overlap or 1 in 2
             if range1.stop < range2.stop: #1 in 2
                 overlap = range1
                 remainder = None
