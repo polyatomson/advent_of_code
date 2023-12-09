@@ -12,7 +12,7 @@ class Node:
     @staticmethod
     def create_node(node_raw: str):
         start, rest = node_raw.split(" = ")
-        left, right = re.findall("[A-Z]+", rest)
+        left, right = re.findall("[A-Z0-9]+", rest)
         return Node(start, left, right)
 
 @dataclass
@@ -40,8 +40,19 @@ class Graph:
             last_node = Graph.follow_instructions(nodes_dict, instructions, start=last_node)
             steps += len(instructions)
         return steps
+    
+    def from_a_to_z_multiple(self, instructions: List[bool]):
+        nodes_dict = self.to_dict()
+        last_nodes = {node_start for node_start in nodes_dict if node_start.endswith("A")}
 
-            
+        steps = 0
+        while all([node_start.endswith("Z") for node_start in last_nodes]) is False:
+            last_nodes = [Graph.follow_instructions(nodes_dict, instructions, start=last_node) 
+                          for last_node in last_nodes]
+            steps += len(instructions)
+        
+        return steps
+
 
 def import_dat(fn: str="8/input.txt") -> (List[bool], Graph):
     with open(fn, 'r') as f:
@@ -58,8 +69,11 @@ def import_dat(fn: str="8/input.txt") -> (List[bool], Graph):
 
 def main():
     instructions, nodes = import_dat()
-    n_steps = nodes.from_a_to_z(instructions)
-    print("Result Part One:", n_steps)
+    # n_steps = nodes.from_a_to_z(instructions)
+    # print("Result Part One:", n_steps)
+
+    n_ghost_steps = nodes.from_a_to_z_multiple(instructions)
+    print("Result Part Two:", n_ghost_steps)
 
 
 
