@@ -47,10 +47,10 @@ class Hand:
             card_to_frequency = Counter(cards).most_common()
             frequency_to_card = [(record[1], record[0]) for record in card_to_frequency]
             optimal_card_to_replace = sorted(frequency_to_card)[-1][1]
-            if optimal_card_to_replace == 1:
+            if optimal_card_to_replace == 1: # joker has to replace another card
                 if len(frequency_to_card) > 1:
                     optimal_card_to_replace = sorted(frequency_to_card)[-2][1]
-                else:
+                else: #all jokers -> replace with the highest possible
                     optimal_card_to_replace = 13
             replace_w_joker = lambda joker, card: joker if card == 1 else card
             new_cards = [replace_w_joker(optimal_card_to_replace, card) for card in cards]
