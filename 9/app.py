@@ -31,16 +31,23 @@ class History:
             history.append(line)
         return History(history)
     
-    def predict(self) -> None:
-        self.history[-1].append(0)
+    def predict(self, forward: bool) -> None:
+        
         history_reversed = list(reversed(self.history))
+        self.history[-1].append(0)
         for i, line in enumerate(history_reversed[:-1]):
-            prediction = line[-1] + history_reversed[i+1][-1]
-            history_reversed[i+1].append(prediction)
+            if forward:
+                prediction = line[-1] + history_reversed[i+1][-1]
+                history_reversed[i+1].append(prediction)
+            else:
+                prediction = history_reversed[i+1][0] - line[0]
+                history_reversed[i+1].insert(0, prediction)
     
-    def get_predictions(self) -> List[int]:
+    def get_predictions_last(self) -> List[int]:
         return self.history[0][-1]
 
+    def get_predictions_back(self) -> List[int]:
+        return self.history[0][0]
 
 
 def import_data(fn: str="9/input.txt") -> List[History]:
@@ -52,12 +59,17 @@ def import_data(fn: str="9/input.txt") -> List[History]:
 
 def main():
     histories = import_data()
-    all_predicted = 0
+    all_predicted_forward = 0
+    all_predicted_backwards = 0
     for history in histories:
-        history.predict()
-        predicted = history.get_predictions()
-        all_predicted += predicted
-    print("Part 1 result:", all_predicted)
+        history.predict(forward=True)
+        history.predict(forward=False)
+        predicted_forward = history.get_predictions_last()
+        predicted_backwards = history.get_predictions_back()
+        all_predicted_forward += predicted_forward
+        all_predicted_backwards += predicted_backwards
+    print("Part 1 result:", all_predicted_forward)        
+    print("Part 2 result:", all_predicted_backwards)
 
 if __name__ == "__main__":
     main()
