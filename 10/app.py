@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Union, Optional
+from collections import Counter
+import turtle
+
 @dataclass
 class Pipe:
     north: bool
@@ -45,8 +48,39 @@ class Map:
             if "S" in characters:
                 start_x = characters.index("S")
                 start_y = lines.index(line)
-        return Map(map, y_dim, x_dim, start_y, start_x)
+        return Map(map, y_size=y_dim, x_size=x_dim, start_y=start_y, start_x=start_x)
     
+    
+    def draw_loop(self, loop: List[tuple[int]]):
+        turtle.color("black")
+        field_x = range(0, self.x_size+1)
+        field_y = range(-(self.y_size-1), 2)
+        for x in field_x:
+            turtle.penup()
+            turtle.setposition(x*10-5, 5)
+            turtle.pendown()
+            turtle.goto(x*10-5, -(self.y_size-1)*10-5)
+
+        for y in field_y:
+            turtle.penup()
+            turtle.setposition(-5, (y*10)-5)
+            turtle.pendown()
+            turtle.goto((self.x_size)*10-5, (y*10)-5)
+
+        turtle.penup()
+        turtle.setposition((loop[0][1]*10, -loop[0][0]*10))
+        turtle.pendown()
+        turtle.color("red")
+        turtle.width(9)
+        for coor in loop[1:]:
+            x = coor[1]
+            y = -coor[0]
+            turtle.goto((x*10, y*10))
+            # print(turtle.pos())
+        turtle.goto((loop[0][1]*10, -loop[0][0]*10))
+        turtle.mainloop()
+
+
     def step(self, y_coordinate: int=0, x_coordinate: int=0):
         start: Pipe = self.map[y_coordinate][x_coordinate]
         if start is None:
@@ -131,42 +165,53 @@ class Map:
     def get_pipe(self, coord: tuple[int]):
         return self.map[coord[0]][coord[1]]
 
-    def find_within_loop(self, been_to: List[tuple[int]]):
-        n_inside = 0
-        for y_coor in range(self.y_size):
-            loop_borders = [border[1] for border in been_to if border[0] == y_coor]
-            loop_borders = sorted(loop_borders)
-            horizontal = [[]]
-            horizontal_ind = 0
-            smth_inside = False
-            for i in range(1, len(loop_borders)):
-                # smth_inside = False
-                if loop_borders[i] - loop_borders[i-1] == 1:
-                    if loop_borders[i-1] not in horizontal[horizontal_ind]:
-                        horizontal[horizontal_ind].extend([loop_borders[i-1], loop_borders[i]])
-                    else:
-                        horizontal[horizontal_ind].append(loop_borders[i])
-                    continue
-                    # i loop_
-                else:
-                    smth_inside = True
-                    horizontal.append([])
-                    horizontal_ind += 1
-                    # usable_borders.append(loop_borders[i-1])
-                    # usable_borders.append(loop_borders[i])
-            if smth_inside:
-                non_lines
-                for i in range(1, len(horizontal), 2):
-                    if len(horizontal[i-1]) == 1:
-                    inside = range(horizontal[i-1][-1], horizontal[i][0]-1)
-                    n = len(inside)
-                    if n > 0:
-                        print(y_coor)
-                        print(loop_borders)
-                        print("inside:", n)
-                    n_inside += len(inside)
-            
-        return n_inside
+    def find_within_loop(self, borders: List[tuple[int]]):
+        not_borders = [(y, x) for y in range(self.y_size) 
+                       for x in range(self.x_size) 
+                       if (y, x) not in borders]
+        out = list()
+        
+        y_lines = [
+            [not_border for not_border in not_borders 
+                 if not_border[0] == y ]
+                 for y in range(self.y_size)]
+        #remove outer lines:
+        y_first_and_last_line = [y_lines.pop(i)
+                                 for i in [0, -1]]
+        out.extend(y_first_and_last_line)
+
+        #remove the lines without any loop pipes
+        y_lines_empty = [y_lines.pop(y_line_id) for y_line_id, y_line
+                          in enumerate(y_lines) if len(y_line) == self.x_size]
+        out.extend(y_lines_empty)
+                
+        x_lines = [
+            [not_border for not_border in not_borders 
+                 if not_border[1] == x ]
+                 for x in range(self.x_size)]
+        #remove the outer columns
+        x_first_and_last_line = [x_lines.pop(i)
+                                 for i in [0, -1]]
+        out.extend(x_first_and_last_line)
+
+        #remove the columns without any loop pipes
+        x_lines_empty = [x_lines.pop(x_line_id) for x_line_id, x_line
+                          in enumerate(x_lines) if len(x_line) == self.y_size]
+        out.extend(x_lines_empty)
+        
+        flatten = lambda my_list: [item for sublist in my_list for item in sublist] if my_list != [] else []
+        out = flatten(out)
+        
+        out = [key for key in Counter(out)] #removes the duplicates
+        out = sorted(out)
+        # for i, tile in enumerate(not_borders):
+        #     tile_out = tile[0] in [0, self.y_size-1] or tile[1] in [0, self.y_size] or tile in out
+        #     if :
+        #         out.append(not_borders[i])
+        potentially_in = [tile for tile in not_borders if tile not in out]
+        for tile in potentially_in:
+            if 
+        return 0
 
 
 def import_dat(fn: str="10/input_test.txt"):
@@ -179,6 +224,7 @@ def main():
     lines = import_dat()
     map = Map.import_pipes(lines)
     loop, furthest = map.go_through()
+    # map.draw_loop(loop)
     print("Part One result:", furthest)
     n_tiles_inside = map.find_within_loop(loop)
     print("Part Two result:", n_tiles_inside)
