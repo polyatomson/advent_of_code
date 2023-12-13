@@ -20,17 +20,59 @@ class Pipe:
             "J":Pipe(north=True, south=False, west=True, east=False, name="J"),
             "7":Pipe(north=False, south=True, west=True, east=False, name="7"),
             "F":Pipe(north=False, south=True, west=False, east=True, name="F"),
-            ".":None,
+            ".":Pipe(north=False, south=False, west=False, east=False, name="."),
             "S":Pipe(north=True, south=True, west=True, east=True, name="start")
         }
         return pipe_dict[character]
     
     # def possible_directions(self):
 
+@dataclass
+class Move:
+    angle: int
+    length: int
+    
+@dataclass
+class Loop:
+    moves: List[Move]
+
+    def delete_nonsteps(self):
+        self.moves = [move for move in self.moves if move.length !=0]
+        print(self.moves)
+
+    def compress_moves(self):
+        for i in range(len(self.moves)-2):
+            if self.moves[i].angle == self.moves[i+1].angle:
+                self.moves[i+1].length += self.moves[i].length
+                self.moves[i].length = 0
+        
+        self.delete_nonsteps()
+        print(self.moves)
+    
+    def draw_loop(self, start: tuple[int, int]=(0, 0), col: str="red"):
+        turtle.width(7)
+        turtle.penup()
+        turtle.goto(start[1]*10, start[0]*10)
+        turtle.pendown()
+        turtle.color(col)
+        for step in self.moves:
+            turtle.setheading(0)
+            turtle.right(step.angle)
+            turtle.forward(step.length*10)
+        # turtle.mainloop()
+    
+    def reduce_loop(self):
+        non_negative = lambda x: 1 if x < 0 else x
+        for i, move in enumerate(self.moves):
+            new_length = non_negative(move.length - 2)
+            self.moves[i].length = new_length
+        self.delete_nonsteps()
+        print(self.moves)
+    
 
 @dataclass
 class Map:
-    map: List[List[Union[None, str]]]
+    map: List[List[Pipe]]
     y_size: int
     x_size: int
     start_y: int
@@ -49,39 +91,8 @@ class Map:
                 start_x = characters.index("S")
                 start_y = lines.index(line)
         return Map(map, y_size=y_dim, x_size=x_dim, start_y=start_y, start_x=start_x)
-    
-    
-    def draw_loop(self, loop: List[tuple[int]]):
-        turtle.color("black")
-        field_x = range(0, self.x_size+1)
-        field_y = range(-(self.y_size-1), 2)
-        for x in field_x:
-            turtle.penup()
-            turtle.setposition(x*10-5, 5)
-            turtle.pendown()
-            turtle.goto(x*10-5, -(self.y_size-1)*10-5)
 
-        for y in field_y:
-            turtle.penup()
-            turtle.setposition(-5, (y*10)-5)
-            turtle.pendown()
-            turtle.goto((self.x_size)*10-5, (y*10)-5)
-
-        turtle.penup()
-        turtle.setposition((loop[0][1]*10, -loop[0][0]*10))
-        turtle.pendown()
-        turtle.color("red")
-        turtle.width(9)
-        for coor in loop[1:]:
-            x = coor[1]
-            y = -coor[0]
-            turtle.goto((x*10, y*10))
-            # print(turtle.pos())
-        turtle.goto((loop[0][1]*10, -loop[0][0]*10))
-        turtle.mainloop()
-
-
-    def step(self, y_coordinate: int=0, x_coordinate: int=0):
+    def step(self, last_move: Move, y_coordinate: int=0, x_coordinate: int=0) -> tuple[Move, (int, int)]:
         start: Pipe = self.map[y_coordinate][x_coordinate]
         if start is None:
             return None #stuck
@@ -91,130 +102,80 @@ class Map:
             try:
                 next = self.map[y_coordinate][x_coordinate+1]
                 if next.west:
-                    all_possible.append((next, y_coordinate, x_coordinate+1))
+                    if last_move.angle != 180:
+                        coor = (y_coordinate, x_coordinate+1)
+                        return Move(0, 1), coor
             except:
                 False
         if start.west:
             try:
                 next = self.map[y_coordinate][x_coordinate-1]
                 if next.east:
-                    all_possible.append((next, y_coordinate, x_coordinate-1))
+                    if last_move.angle != 0:
+                        coor = (y_coordinate, x_coordinate-1)
+                        return Move(180, 1), coor
             except:
                 False
         if start.north:
             try:
                 next = self.map[y_coordinate-1][x_coordinate]
                 if next.south:
-                    all_possible.append((next, y_coordinate-1, x_coordinate))
+                    if last_move.angle != 90:
+                        coor = (y_coordinate-1, x_coordinate)
+                        return Move(270, 1), coor
             except:
                 False
+        
         if start.south:
             try:
                 next = self.map[y_coordinate+1][x_coordinate]
                 if next.north:
-                    all_possible.append((next, y_coordinate+1, x_coordinate))
+                    if last_move.angle != 270:
+                        coor = (y_coordinate+1, x_coordinate)
+                        return Move(90, 1), coor
             except:
                 False
+
         
-        if all_possible == []:
-            return None #stuck
-        else:
-            return all_possible
-
-
-    def go_through(self) -> (List[tuple[int]], int):
-        start: Pipe = self.map[self.start_y][self.start_x]
-        start_options = self.step(self.start_y, self.start_x)
-        # start = Pipe(True, True, True, True, "false_start")
-
-        for start_option in start_options[0:1]:
-            next, next_y_coor, next_x_coor = start_option
-            been_to = [(self.start_y, self.start_x),
-                       (next_y_coor, next_x_coor)]
-            print("\n\n\n", next.name)
-            while next != "finish":
-                # print(next.name)
-                all_possible = self.step(next_y_coor, next_x_coor)
-                stuck = True
-                for possible in all_possible:
-                    if possible is None:
-                        continue
-                    next_poss, next_y_coor_poss, next_x_coor_poss = possible
-                    if not (next_y_coor_poss, next_x_coor_poss) in been_to:
-                        next, next_y_coor, next_x_coor = next_poss, next_y_coor_poss, next_x_coor_poss
-                        stuck = False
-                        print(next.name, end="->")
-                        # continue
-                    elif next_poss.name == "start" and len(been_to)>3:
-                        next = "finish"
-                    else:
-                        continue
-                if not stuck:
-                    been_to.append((next_y_coor, next_x_coor))
-                else:
-                    if next == "finish":
-                        print("finish")
-                    else:
-                        print("stuck")
-                    break
-            print(len(been_to))
-
-        # return self.map[furthest_coor_y][furthest_coor_x]
-        return been_to, len(been_to)//2
-        
-    def get_pipe(self, coord: tuple[int]):
+        return None # stuck
+    
+    def get_pipe(self, coord: tuple[int]) -> Pipe:
         return self.map[coord[0]][coord[1]]
 
-    def find_within_loop(self, borders: List[tuple[int]]):
-        not_borders = [(y, x) for y in range(self.y_size) 
-                       for x in range(self.x_size) 
-                       if (y, x) not in borders]
-        out = list()
+    def go_through(self) -> tuple[List[tuple[int]], Loop]:
+        start = self.step(Move(7, 1), self.start_y, self.start_x)
+        last_move, next_coors = start
+        loop = [(self.start_y, self.start_x), next_coors]
+        moves = [last_move]
         
-        y_lines = [
-            [not_border for not_border in not_borders 
-                 if not_border[0] == y ]
-                 for y in range(self.y_size)]
-        #remove outer lines:
-        y_first_and_last_line = [y_lines.pop(i)
-                                 for i in [0, -1]]
-        out.extend(y_first_and_last_line)
-
-        #remove the lines without any loop pipes
-        y_lines_empty = [y_lines.pop(y_line_id) for y_line_id, y_line
-                          in enumerate(y_lines) if len(y_line) == self.x_size]
-        out.extend(y_lines_empty)
-                
-        x_lines = [
-            [not_border for not_border in not_borders 
-                 if not_border[1] == x ]
-                 for x in range(self.x_size)]
-        #remove the outer columns
-        x_first_and_last_line = [x_lines.pop(i)
-                                 for i in [0, -1]]
-        out.extend(x_first_and_last_line)
-
-        #remove the columns without any loop pipes
-        x_lines_empty = [x_lines.pop(x_line_id) for x_line_id, x_line
-                          in enumerate(x_lines) if len(x_line) == self.y_size]
-        out.extend(x_lines_empty)
+        while next_coors != (self.start_y, self.start_x):
+            new_step = self.step(last_move, next_coors[0], next_coors[1])
+            if new_step is not None:
+                last_move, next_coors = new_step
+                moves.append(last_move)
+                loop.append(next_coors)
+                next_name = self.get_pipe(next_coors).name
+                print(next_name, end="->")
+            else:
+                print("stuck")
+                break
+        print("\n")
+        return loop, Loop(moves)
         
-        flatten = lambda my_list: [item for sublist in my_list for item in sublist] if my_list != [] else []
-        out = flatten(out)
-        
-        out = [key for key in Counter(out)] #removes the duplicates
-        out = sorted(out)
-        # for i, tile in enumerate(not_borders):
-        #     tile_out = tile[0] in [0, self.y_size-1] or tile[1] in [0, self.y_size] or tile in out
-        #     if :
-        #         out.append(not_borders[i])
-        potentially_in = [tile for tile in not_borders if tile not in out]
-        for tile in potentially_in:
-            if 
-        return 0
+    
+    
+    @staticmethod
+    def inner_coor(coor: tuple[int]):
+        return (coor[0]+1, coor[1]+1)
+
+    # def internal_loop(self, borders: List[tuple[int]]):
+    #     for coor in borders:
+    #         try:
+    #             self.get_pipe()
 
 
-def import_dat(fn: str="10/input_test.txt"):
+
+def import_dat(fn: str="10/input.txt"):
     with open(fn, 'r') as f:
         dat = f.readlines()
     lines = [line.strip("\n") for line in dat]
@@ -223,10 +184,16 @@ def import_dat(fn: str="10/input_test.txt"):
 def main():
     lines = import_dat()
     map = Map.import_pipes(lines)
-    loop, furthest = map.go_through()
-    # map.draw_loop(loop)
+    loop, moves = map.go_through()
+    furthest = len(moves.moves)//2
     print("Part One result:", furthest)
-    n_tiles_inside = map.find_within_loop(loop)
+    moves.compress_moves()
+    # moves.draw_loop((1,0))
+    print("Part One result:", furthest)
+    # moves.reduce_loop()
+    # turtle.mainloop()
+    # n_tiles_inside = map.find_within_loop(loop)
+    print()
     print("Part Two result:", n_tiles_inside)
 
 
