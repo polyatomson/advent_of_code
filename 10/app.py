@@ -164,18 +164,49 @@ class Map:
         
     
     
-    @staticmethod
-    def inner_coor(coor: tuple[int]):
-        return (coor[0]+1, coor[1]+1)
+    def inner_tiles(self, loop: List[tuple[int,int]]):
+        # rows = [[coor for coor in loop if coor[0] == i] for i in self]   
+        rows_cut = [[]]
+        for row in range(self.y_size):
+            row_cut = {1:{"line": [], "is_border": True}}
+            n = 1
+            last_was_border = True
+            for col in range(self.x_size):
+                cand = (row, col)
+                if cand in loop:
+                    if last_was_border is True:
+                        row_cut[n]["line"].append(col)
+                    else:
+                        n += 1
+                        row_cut[n] = {"line": [col], "is_border": True}
+                    last_was_border = True
+                else:
+                    if last_was_border is False:
+                        row_cut[n]["line"].append(col)
+                    else:
+                        n += 1
+                        row_cut[n] = {"line": [col], "is_border": False}
+                    last_was_border = False
+            
+            if row_cut[1]['line'] == []:
+                row_cut.pop(1)
+                row_cut = {k-1:v for k, v in row_cut.items()}
+            # row_cut = [range(min(line),max(line)+1) for row_line in row_cut]
+            if len(row_cut) < 3:
+                inside = 0
+            elif len(row_cut) % 2 == 0:
+                if starts_with_border:
+                    inside = [line for i, line in enumerate(row_cut) if i % 2 == 0 and i != 0]
+                else:
+                    inside = [line for i, line in enumerate(row_cut) if i % 2 == 1 and i != 0]
+        rows_cut.append(row_cut)
+        print()
+                
+                    
 
-    # def internal_loop(self, borders: List[tuple[int]]):
-    #     for coor in borders:
-    #         try:
-    #             self.get_pipe()
 
 
-
-def import_dat(fn: str="10/input.txt"):
+def import_dat(fn: str="10/input_test.txt"):
     with open(fn, 'r') as f:
         dat = f.readlines()
     lines = [line.strip("\n") for line in dat]
@@ -188,13 +219,15 @@ def main():
     furthest = len(moves.moves)//2
     print("Part One result:", furthest)
     moves.compress_moves()
-    # moves.draw_loop((1,0))
+    # map.inner_tiles(loop)
+    moves.draw_loop((0,0))
     print("Part One result:", furthest)
     # moves.reduce_loop()
     # turtle.mainloop()
     # n_tiles_inside = map.find_within_loop(loop)
     print()
-    print("Part Two result:", n_tiles_inside)
+    turtle.filling()
+    # print("Part Two result:", n_tiles_inside)
 
 
 if __name__ == "__main__":
