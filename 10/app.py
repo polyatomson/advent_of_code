@@ -25,7 +25,6 @@ class Pipe:
         }
         return pipe_dict[character]
 
-
 @dataclass
 class Move:
     angle: int
@@ -38,7 +37,7 @@ class Loop:
     def delete_nonsteps(self):
         self.moves = [move for move in self.moves if move.length !=0]
         print(self.moves)
-
+    
     def compress_moves(self):
         for i in range(len(self.moves)-2):
             if self.moves[i].angle == self.moves[i+1].angle:
@@ -46,9 +45,8 @@ class Loop:
                 self.moves[i].length = 0
         
         self.delete_nonsteps()
-        print(self.moves)
     
-    def draw_loop(self, start: tuple[int, int]=(0, 0), col: str="red"):
+    def visualize_loop(self, start: tuple[int, int]=(0, 0), col: str="red"):
         turtle.width(7)
         turtle.penup()
         turtle.goto(start[1]*10, start[0]*10)
@@ -59,15 +57,6 @@ class Loop:
             turtle.right(step.angle)
             turtle.forward(step.length*10)
     
-    def reduce_loop(self):
-        non_negative = lambda x: 1 if x < 0 else x
-        for i, move in enumerate(self.moves):
-            new_length = non_negative(move.length - 2)
-            self.moves[i].length = new_length
-        self.delete_nonsteps()
-        print(self.moves)
-    
-
 @dataclass
 class Map:
     map: List[List[Pipe]]
@@ -93,11 +82,10 @@ class Map:
     def get_pipe(self, coord: tuple[int]) -> Pipe:
         return self.map[coord[0]][coord[1]]
 
-    def step(self, last_move: Move, y_coordinate: int=0, x_coordinate: int=0) -> tuple[Move, (int, int)]:
+    def step(self, last_move: Move, y_coordinate: int=0, x_coordinate: int=0) -> tuple[Move, (int, int), Optional[tuple[int, int]]]:
         start: Pipe = self.map[y_coordinate][x_coordinate]
         if start is None:
             return None #stuck
-        all_possible = list()
         
         if start.east:
             try:
@@ -111,7 +99,6 @@ class Map:
                             corner = None
                         return Move(0, 1), coor, corner
             except Exception as ex:
-                # print(ex)
                 False
         if start.west:
             try:
@@ -137,7 +124,6 @@ class Map:
                         else:
                             corner = None
                         return Move(270, 1), coor, corner
-                        
             except:
                 False
         
@@ -175,17 +161,17 @@ class Map:
                 loop.append(next_coors)
                 corners.append(corner)
                 next_name = self.get_pipe(next_coors).name
-                print(next_name, end="->")
+                
             else:
                 print("stuck")
                 break
-        print("\n")
+        
         corners = [corner for corner in corners if corner is not None]
         return loop, Loop(moves), corners
         
     
     
-def area(loop: List[tuple[int,int]], corners: List[tuple[int,int]]):
+def get_n_inner_tiles(loop: List[tuple[int,int]], corners: List[tuple[int,int]]) -> int:
         corners.append(loop[0])
         area = [(corners[i][1] * corners[i+1][0]) - (corners[i][0] * corners[i+1][1]) for i in range(0, len(corners)-1)]
         area = abs(sum(area))/2
@@ -209,9 +195,9 @@ def main():
     loop, moves, corners = map.go_through()
     furthest = len(moves.moves)//2
     print("Part One result:", furthest)
-    moves.compress_moves()
-    print("Part One result:", furthest)
-    inner_tiles = area(loop, corners)
+    # moves.compress_moves()
+    # moves.visualize_loop(0,0)
+    inner_tiles = get_n_inner_tiles(loop, corners)
     print("Part Two result:", inner_tiles)
 
 
