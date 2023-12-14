@@ -24,8 +24,7 @@ class Pipe:
             "S":Pipe(north=True, south=True, west=True, east=True, name="start")
         }
         return pipe_dict[character]
-    
-    # def possible_directions(self):
+
 
 @dataclass
 class Move:
@@ -59,7 +58,6 @@ class Loop:
             turtle.setheading(0)
             turtle.right(step.angle)
             turtle.forward(step.length*10)
-        # turtle.mainloop()
     
     def reduce_loop(self):
         non_negative = lambda x: 1 if x < 0 else x
@@ -91,6 +89,9 @@ class Map:
                 start_x = characters.index("S")
                 start_y = lines.index(line)
         return Map(map, y_size=y_dim, x_size=x_dim, start_y=start_y, start_x=start_x)
+    
+    def get_pipe(self, coord: tuple[int]) -> Pipe:
+        return self.map[coord[0]][coord[1]]
 
     def step(self, last_move: Move, y_coordinate: int=0, x_coordinate: int=0) -> tuple[Move, (int, int)]:
         start: Pipe = self.map[y_coordinate][x_coordinate]
@@ -104,8 +105,13 @@ class Map:
                 if next.west:
                     if last_move.angle != 180:
                         coor = (y_coordinate, x_coordinate+1)
-                        return Move(0, 1), coor
-            except:
+                        if next.name in ["L", "F", "7", "J", "S"]:
+                            corner = coor
+                        else:
+                            corner = None
+                        return Move(0, 1), coor, corner
+            except Exception as ex:
+                # print(ex)
                 False
         if start.west:
             try:
@@ -113,7 +119,11 @@ class Map:
                 if next.east:
                     if last_move.angle != 0:
                         coor = (y_coordinate, x_coordinate-1)
-                        return Move(180, 1), coor
+                        if next.name in ["L", "F", "7", "J", "S"]:
+                            corner = coor
+                        else:
+                            corner = None
+                        return Move(180, 1), coor, corner
             except:
                 False
         if start.north:
@@ -122,7 +132,12 @@ class Map:
                 if next.south:
                     if last_move.angle != 90:
                         coor = (y_coordinate-1, x_coordinate)
-                        return Move(270, 1), coor
+                        if next.name in ["L", "F", "7", "J", "S"]:
+                            corner = coor
+                        else:
+                            corner = None
+                        return Move(270, 1), coor, corner
+                        
             except:
                 False
         
@@ -132,81 +147,57 @@ class Map:
                 if next.north:
                     if last_move.angle != 270:
                         coor = (y_coordinate+1, x_coordinate)
-                        return Move(90, 1), coor
+                        if next.name in ["L", "F", "7", "J", "S"]:
+                            corner = coor
+                        else:
+                            corner = None
+                        return Move(90, 1), coor, corner
             except:
                 False
 
         
         return None # stuck
     
-    def get_pipe(self, coord: tuple[int]) -> Pipe:
-        return self.map[coord[0]][coord[1]]
+    
 
     def go_through(self) -> tuple[List[tuple[int]], Loop]:
         start = self.step(Move(7, 1), self.start_y, self.start_x)
-        last_move, next_coors = start
+        last_move, next_coors, corner = start
         loop = [(self.start_y, self.start_x), next_coors]
+        corners = [(self.start_y, self.start_x), corner]
         moves = [last_move]
         
         while next_coors != (self.start_y, self.start_x):
             new_step = self.step(last_move, next_coors[0], next_coors[1])
             if new_step is not None:
-                last_move, next_coors = new_step
+                last_move, next_coors, corner = new_step
                 moves.append(last_move)
                 loop.append(next_coors)
+                corners.append(corner)
                 next_name = self.get_pipe(next_coors).name
                 print(next_name, end="->")
             else:
                 print("stuck")
                 break
         print("\n")
-        return loop, Loop(moves)
+        corners = [corner for corner in corners if corner is not None]
+        return loop, Loop(moves), corners
         
     
     
-    def inner_tiles(self, loop: List[tuple[int,int]]):
-        # rows = [[coor for coor in loop if coor[0] == i] for i in self]   
-        rows_cut = [[]]
-        for row in range(self.y_size):
-            row_cut = {1:{"line": [], "is_border": True}}
-            n = 1
-            last_was_border = True
-            for col in range(self.x_size):
-                cand = (row, col)
-                if cand in loop:
-                    if last_was_border is True:
-                        row_cut[n]["line"].append(col)
-                    else:
-                        n += 1
-                        row_cut[n] = {"line": [col], "is_border": True}
-                    last_was_border = True
-                else:
-                    if last_was_border is False:
-                        row_cut[n]["line"].append(col)
-                    else:
-                        n += 1
-                        row_cut[n] = {"line": [col], "is_border": False}
-                    last_was_border = False
-            
-            if row_cut[1]['line'] == []:
-                row_cut.pop(1)
-                row_cut = {k-1:v for k, v in row_cut.items()}
-            # row_cut = [range(min(line),max(line)+1) for row_line in row_cut]
-            if len(row_cut) < 3:
-                inside = 0
-            elif len(row_cut) % 2 == 0:
-                if starts_with_border:
-                    inside = [line for i, line in enumerate(row_cut) if i % 2 == 0 and i != 0]
-                else:
-                    inside = [line for i, line in enumerate(row_cut) if i % 2 == 1 and i != 0]
-        rows_cut.append(row_cut)
-        print()
+def area(loop: List[tuple[int,int]], corners: List[tuple[int,int]]):
+        corners.append(loop[0])
+        area = [(corners[i][1] * corners[i+1][0]) - (corners[i][0] * corners[i+1][1]) for i in range(0, len(corners)-1)]
+        area = abs(sum(area))/2
+        inside = area - (len(loop)-1)/2 + 1
+        return int(inside)
+        
                 
                     
 
 
 
-def import_dat(fn: str="10/input_test.txt"):
+def import_dat(fn: str="10/input.txt"):
     with open(fn, 'r') as f:
         dat = f.readlines()
     lines = [line.strip("\n") for line in dat]
@@ -215,19 +206,13 @@ def import_dat(fn: str="10/input_test.txt"):
 def main():
     lines = import_dat()
     map = Map.import_pipes(lines)
-    loop, moves = map.go_through()
+    loop, moves, corners = map.go_through()
     furthest = len(moves.moves)//2
     print("Part One result:", furthest)
     moves.compress_moves()
-    # map.inner_tiles(loop)
-    moves.draw_loop((0,0))
     print("Part One result:", furthest)
-    # moves.reduce_loop()
-    # turtle.mainloop()
-    # n_tiles_inside = map.find_within_loop(loop)
-    print()
-    turtle.filling()
-    # print("Part Two result:", n_tiles_inside)
+    inner_tiles = area(loop, corners)
+    print("Part Two result:", inner_tiles)
 
 
 if __name__ == "__main__":
