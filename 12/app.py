@@ -4,37 +4,6 @@ from typing import List, Optional
 import itertools
 
 
-# def rangify(int_list: List[int]):
-#     if int_list == []:
-#         return []
-#     cut = [[int_list[0]]]
-#     for i, n in enumerate(int_list[1:]):
-#         if n - int_list[i] == 1:
-#             cut[-1].append(n)
-#         else:
-#             cut.append([n])
-    
-#     rangified = [range(min(l), max(l)+1) for l in cut]
-#     return rangified
-
-# def compress_ranges(r_list: List[range]):
-#     compressed = list()
-#     for i, r in enumerate(r_list[1:]):
-#         if r_list[i].stop == r.start:
-#             if compressed != []:
-#                 compressed[-1] = range(compressed[-1].start, r.stop)
-#             else:
-#                 compressed.append(range(r_list[i].start, r.stop))
-#         else:
-#             if compressed != []:
-#                 compressed.append(r)
-#             else:
-#                 compressed.extend([r_list[i], r])
-#     return compressed
-
-# def rangified_len(rangified: List[range]) -> int:
-#     return sum([len(r) for r in rangified])
-
 
 @dataclass
 class SpringLine:
@@ -78,7 +47,7 @@ class SpringLine:
 def import_data(fn: str="12/input_test.txt") -> List[SpringLine]:
     with open(fn, 'r') as f:
         dat = f.readlines()
-    dat = [line.split(" ")for line in dat]
+    dat = [line.split(" ") for line in dat]
     return [SpringLine.load(row[0], row[1]) for row in dat]
 
 def main():
@@ -88,6 +57,36 @@ def main():
         options += x.evaluate_options()
     print("Part One Result:", options)
 
-
 if __name__ == '__main__':
     main()
+
+# def rangify(int_list: List[int]):
+#     if int_list == []:
+#         return []
+#     cut = [[int_list[0]]]
+#     for i, n in enumerate(int_list[1:]):
+#         if n - int_list[i] == 1:
+#             cut[-1].append(n)
+#         else:
+#             cut.append([n])
+    
+#     rangified = [range(min(l), max(l)+1) for l in cut]
+#     return rangified
+
+# def compress_ranges(r_list: List[range]):
+#     compressed = list()
+#     for i, r in enumerate(r_list[1:]):
+#         if r_list[i].stop == r.start:
+#             if compressed != []:
+#                 compressed[-1] = range(compressed[-1].start, r.stop)
+#             else:
+#                 compressed.append(range(r_list[i].start, r.stop))
+#         else:
+#             if compressed != []:
+#                 compressed.append(r)
+#             else:
+#                 compressed.extend([r_list[i], r])
+#     return compressed
+
+# def rangified_len(rangified: List[range]) -> int:
+#     return sum([len(r) for r in rangified])
