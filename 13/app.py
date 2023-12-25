@@ -17,11 +17,11 @@ class Lava:
         return Lava(rows, cols, len(rows), len(cols))
     
     def mirroring_vert(self, cut: int) -> Union[range, bool]:
-        max_steps = min(self.n_col-1-cut, cut)
+        # max_steps = min(self.n_col-cut, cut)
         mirror_range = 0
         index_left = cut-1
         index_right = cut
-        for step in range(max_steps+1):
+        while index_left != -1 and index_right != self.n_col:
             if self.columns[index_left] == self.columns[index_right]:
                 mirror_range = range(index_left, index_right+1)
                 index_left -= 1
@@ -34,11 +34,13 @@ class Lava:
             return False
     
     def mirroring_hor(self, cut: int) -> Union[range, bool]:
-        max_steps = min(self.n_rows-1-cut, cut)
+        # max_steps = min(self.n_rows-cut, cut)
         mirror_range = 0
         index_left = cut-1
         index_right = cut
-        for step in range(max_steps+1):
+        while index_left != -1 and index_right != self.n_rows:
+            if index_left < 0:
+                break
             if self.rows[index_left] == self.rows[index_right]:
                 mirror_range = range(index_left, index_right+1)
                 index_left -= 1
@@ -55,10 +57,15 @@ class Lava:
         for cut in range(1, self.n_col):
             mirror = self.mirroring_vert(cut)
             if mirror:
-                cuts[cut] = len(mirror)
+                if mirror.start == 0 or mirror.stop == self.n_col:
+                    cuts[cut] = len(mirror)
+                    # if mirror.start == 0 and mirror.stop == self.n_rows:
+                    #     print("ideal")
         if cuts == {}:
             return (0,0)
         else:
+            # if len(cuts) > 1:
+            #     print("ups")
             cuts = sorted(cuts.items(), key=lambda item: item[1])
             return cuts[-1]
     
@@ -67,12 +74,17 @@ class Lava:
         for cut in range(1, self.n_rows):
             mirror = self.mirroring_hor(cut)
             if mirror:
-                cuts[cut] = len(mirror)
+                if mirror.start == 0 or mirror.stop == self.n_rows:
+                    cuts[cut] = len(mirror)
+                    # if mirror.start == 0 and mirror.stop == self.n_rows:
+                    #     print("ideal")
             else:
                 continue
         if cuts == {}:
             return (0,0)
         else:
+            # if len(cuts) > 1:
+                # print("ups")
             cuts = sorted(cuts.items(), key=lambda item: item[1])
             return cuts[-1]
 
@@ -95,14 +107,15 @@ class Lavas:
             print(i)
             vert = lava.find_mirror_vert()
             hor = lava.find_mirror_hor()
-            if lava.n_col - vert[1] < lava.n_rows - hor[1]:
+            # if vert[1] == 0 and hor[1] == 0:
+            #     print("ups")
+            if vert[1] != 0:
                 result_vert += vert[0]
-            else:
+                print(result_vert)
+            elif hor[1] != 0:
                 result_hor += hor[0]
         
         return result_vert + result_hor*100
-
-
 
 
 def main():
