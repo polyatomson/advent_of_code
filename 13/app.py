@@ -91,10 +91,11 @@ class Lavas:
         result_vert = 0
         result_hor = 0
 
-        for lava in self.lavas:
+        for i, lava in enumerate(self.lavas):
+            print(i)
             vert = lava.find_mirror_vert()
             hor = lava.find_mirror_hor()
-            if vert[1] > hor[1]:
+            if lava.n_col - vert[1] < lava.n_rows - hor[1]:
                 result_vert += vert[0]
             else:
                 result_hor += hor[0]
