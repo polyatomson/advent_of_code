@@ -1,6 +1,17 @@
 from typing import List
 from dataclasses import dataclass
-import re
+
+def find_pattern(sequence: List[int]):
+    pattern = []
+    i = 0
+    for i, n in enumerate(sequence):
+        rest_of_sequence = sequence[i+1:]
+        if n in rest_of_sequence:
+            next_occ_i = rest_of_sequence.index(n)
+            if sequence[i+1] == rest_of_sequence[next_occ_i+1]:
+                pattern.append(i)
+    # while sequence[i] not in new:
+    #     new.append(sequence[i])
 
 @dataclass
 class Board:
@@ -108,9 +119,9 @@ def main():
     board = Board.load('14/input_test.txt')
     print(board)
     board.turn_left() # north left
-    print(board)
+    # print(board)
     board.tilt_left()
-    print(board)
+    # print(board)
     board.turn_right() # compare results
     print(board)
     print("Part one result:", board.total_load())
@@ -120,16 +131,13 @@ def main():
     print(board)
     board.turn_left() # north left
     # print(board)
-    # inp = ''
     n_cycles = 0
     loads = []
-    # while load != 64:
-    while n_cycles < 200:
-        # inp = input("continue?")
+    while n_cycles < 50:
         n_cycles += 1
         board.cycle()
         board.turn_right()
-        print(n_cycles, board)
+        # print(n_cycles, board)
         load = board.total_load()
         board.turn_left()
         # if load in loads:
@@ -137,6 +145,7 @@ def main():
         # else:
         #     print("new")
         loads.append(load)
+    pattern = find_pattern(loads)
     
 
 
