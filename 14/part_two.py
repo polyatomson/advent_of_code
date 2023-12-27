@@ -1,15 +1,32 @@
 from typing import List
 from dataclasses import dataclass
+from collections import Counter
 
 def find_pattern(sequence: List[int]):
     pattern = []
     i = 0
+    
     for i, n in enumerate(sequence):
         rest_of_sequence = sequence[i+1:]
         if n in rest_of_sequence:
-            next_occ_i = rest_of_sequence.index(n)
-            if sequence[i+1] == rest_of_sequence[next_occ_i+1]:
-                pattern.append(i)
+            next_occurences = [pos for pos, num in enumerate(rest_of_sequence) if num == n]
+            for next_occ_i in next_occurences:
+                for x in range(1, len(rest_of_sequence)-1-next_occ_i):
+                    if sequence[i+x] != rest_of_sequence[next_occ_i+x]:
+                        in_pattern=False
+                        break
+                    else:
+                        in_pattern=True
+                        continue
+                if in_pattern is True:
+                    pattern.append(i)
+                    break
+    first = sequence[0:pattern[0]]
+    steps = [[]]
+    patterned = [sequence[i] for i in pattern]
+
+    return pattern
+                    
     # while sequence[i] not in new:
     #     new.append(sequence[i])
 
