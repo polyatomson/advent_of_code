@@ -1,34 +1,35 @@
 from typing import List
 from dataclasses import dataclass
-from collections import Counter
 
 def find_pattern(sequence: List[int]):
-    pattern = []
-    i = 0
-    
+    n_steps = None
+
     for i, n in enumerate(sequence):
+        if n_steps is not None:
+            break
         rest_of_sequence = sequence[i+1:]
         if n in rest_of_sequence:
             next_occurences = [pos for pos, num in enumerate(rest_of_sequence) if num == n]
-            for next_occ_i in next_occurences:
-                for x in range(1, len(rest_of_sequence)-1-next_occ_i):
-                    if sequence[i+x] != rest_of_sequence[next_occ_i+x]:
-                        in_pattern=False
-                        break
-                    else:
-                        in_pattern=True
-                        continue
-                if in_pattern is True:
-                    pattern.append(i)
+        else:
+            continue
+        for next_occ_i in next_occurences:
+            for x in range(1, len(rest_of_sequence)-1-next_occ_i):
+                if sequence[i+x] != rest_of_sequence[next_occ_i+x]:
+                    in_pattern=False
                     break
-    first = sequence[0:pattern[0]]
-    steps = [[]]
-    patterned = [sequence[i] for i in pattern]
-
-    return pattern
-                    
-    # while sequence[i] not in new:
-    #     new.append(sequence[i])
+                else:
+                    in_pattern=True
+                    continue
+            if in_pattern is True:
+                start_pattern = i
+                n_steps = next_occ_i
+                break
+    try:
+        n_before_loop = start_pattern
+        pattern = sequence[start_pattern:start_pattern+n_steps+1]
+        return n_before_loop, pattern
+    except:
+        raise Exception("Trying a larger number of cycles")
 
 @dataclass
 class Board:
@@ -36,7 +37,10 @@ class Board:
     left_headed: str = 'west'
 
     def __repr__(self) -> str:
-        return self.left_headed + '\n' + ('\n'.join(self.rows)) + '\n'
+        if_k_left_then_above_v = {'west': 'north', 'north': 'east', 
+                                  'south': 'west', 'east': 'south'}
+        above = if_k_left_then_above_v[self.left_headed]
+        return above + '\n' + ('\n'.join(self.rows)) + '\n'
 
     @staticmethod
     def load(fn: str='14/input_test.txt') -> 'Board':
@@ -46,9 +50,6 @@ class Board:
         return Board(dat)
     
     def turn_right(self):
-        # for i in range(len(self.rows[0])):
-        #     for row in reversed(self.rows):
-        #         row[i]
 
         cols = [''.join([row[i] for row in reversed(self.rows)]) for i in range(len(self.rows[0]))]
         self.rows = cols
@@ -68,20 +69,6 @@ class Board:
             self.left_headed = 'north'
         else:
             raise Exception('dubious rotation')
-    
-    # def turn_south_from_west(self):
-    #     self.turn_north_from_west()
-    #     self.rows = list(reversed(self.rows))
-    #     self.left_headed = 'south'
-    
-    # def turn_east_from_south(self):
-    #     self.turn_north_from_west()
-    #     self.rows = list(reversed(self.rows))
-    #     self.left_headed = 'east'
-    
-    # def turn_north_from_east(self):
-    #     self.turn_south_from_west()
-    #     self.left_headed = 'north'
     
     @staticmethod
     def cut_row_into_blocks(row: str):
@@ -130,43 +117,54 @@ class Board:
         
         self.turn_right() # north left again
     
-    
-def main():
-    # Part One
-    board = Board.load('14/input_test.txt')
+
+def part_one(fn: str='14/input_test.txt'):
+    board = Board.load(fn)
     print(board)
     board.turn_left() # north left
-    # print(board)
     board.tilt_left()
-    # print(board)
     board.turn_right() # compare results
     print(board)
-    print("Part one result:", board.total_load())
-
-    # Part Two
-    board = Board.load('14/input_test.txt')
-    print(board)
-    board.turn_left() # north left
-    # print(board)
-    n_cycles = 0
-    loads = []
-    while n_cycles < 50:
-        n_cycles += 1
-        board.cycle()
-        board.turn_right()
-        # print(n_cycles, board)
-        load = board.total_load()
-        board.turn_left()
-        # if load in loads:
-        #     print("been_there!")
-        # else:
-        #     print("new")
-        loads.append(load)
-    pattern = find_pattern(loads)
     
+    return board.total_load()
+
+def part_two(n_cycles: int, fn: str='14/input_test.txt', more_cycles: int=50):
+    board = Board.load(fn)
+    board.turn_left() # north left
+    
+    not_enough = True
+    loads = []
+    #test algorithm on n cycles to find a pattern
+    while not_enough is not False:
+        for cikl in range(more_cycles):
+            board.cycle()
+            board.turn_right()
+            load = board.total_load()
+            board.turn_left()
+            loads.append(load)
+        try:
+            #find a pattern
+            n_before_loop, pattern = find_pattern(loads)
+            not_enough = False
+        except Exception as ex:
+            print(ex)
+            continue
+    
+    # find where in the cycle it would stop
+    cycle_leftover = (n_cycles - n_before_loop)%len(pattern)
+    final_load = pattern[cycle_leftover-1]
+
+    return final_load
 
 
-    print("Part two result:", board.total_load())
+def main():
+    # Part One
+    final_load = part_one()
+    print("Part one result:", final_load)
+    # Part Two
+    final_load = part_two(1000**3, '14/input.txt')
+    print("Part two result:", final_load)
+    
 
 if __name__ == '__main__':
     main()
